@@ -47,10 +47,14 @@ def generate_lrn(layer_input, name):
 def generate_fully_connected(layer_input, input_count, neuron_count, name):
     weights = init_weights([input_count, neuron_count])
     biaes = init_biases([neuron_count])
+    print "layer input " + str(layer_input.get_shape())
     inference = layer_input
     if len(layer_input.get_shape().as_list()) > 2:
+        print "before " + str(inference.get_shape())
         inference = tf.reshape(inference, [-1, input_count])
+        print "after " + str(inference.get_shape())
     fc = tf.nn.bias_add(tf.matmul(inference, weights), biaes, name=name)
+    print "fc " + str(fc.get_shape())
     return fc
 
 
@@ -73,7 +77,7 @@ def get_loss(y_pred, y_true):
 def alex_net():
     dropout = 0.5
     learning_rate = 0.01
-    train_epoch = 100
+    train_epoch = 10
 
     x = tf.placeholder("float", [None, size_input, size_input, 3])
 
@@ -90,9 +94,10 @@ def alex_net():
     conv5 = generate_conv2d(conv4, 3, 384, 256, 1, 'conv5')
 
     pool3 = generate_max_pooling(conv5, 3, 2, 'pool3')
+
     lrn3 = generate_lrn(pool3, 'lrn3')
 
-    fc1 = generate_fully_connected(lrn3, 256, 4096, 'fc1')
+    fc1 = generate_fully_connected(lrn3, 8 * 8 * 256, 4096, 'fc1')
     fc1 = tf.nn.tanh(fc1)
     drop1 = tf.nn.dropout(fc1, dropout)
 
@@ -125,17 +130,20 @@ def alex_net():
         tf.initialize_all_variables().run()
 
         for i in range(train_epoch):
-            train_idx = np.random.randint(len(train_x), size=10)
+            train_idx = np.random.randint(len(train_x), size=100)
             train_batch_x = train_x[train_idx]
             train_batch_y = train_y[train_idx]
-            sess.run(train_step, feed_dict={x: train_batch_x, y: train_batch_y})
+            sess.run(
+                train_step,
+                feed_dict={x: train_batch_x, y: train_batch_y})
 
             if i % 10 == 0:
-                test_idx = np.random.randint(len(test_x), size=10)
+                test_idx = np.random.randint(len(test_x), size=100)
                 test_batch_x = test_x[test_idx]
                 test_batch_y = test_y[test_idx]
                 print "test accuracy %g" % accuracy.eval(feed_dict={
                     x: test_batch_x, y: test_batch_y})
+        file_writer = tf.summary.FileWriter('logs', sess.graph)
 
 
 alex_net()
