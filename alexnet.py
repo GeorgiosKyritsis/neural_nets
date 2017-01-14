@@ -47,14 +47,10 @@ def generate_lrn(layer_input, name):
 def generate_fully_connected(layer_input, input_count, neuron_count, name):
     weights = init_weights([input_count, neuron_count])
     biaes = init_biases([neuron_count])
-    print "layer input " + str(layer_input.get_shape())
     inference = layer_input
     if len(layer_input.get_shape().as_list()) > 2:
-        print "before " + str(inference.get_shape())
         inference = tf.reshape(inference, [-1, input_count])
-        print "after " + str(inference.get_shape())
     fc = tf.nn.bias_add(tf.matmul(inference, weights), biaes, name=name)
-    print "fc " + str(fc.get_shape())
     return fc
 
 
@@ -76,8 +72,8 @@ def get_loss(y_pred, y_true):
 
 def alex_net():
     dropout = 0.5
-    learning_rate = 0.01
-    train_epoch = 10
+    learning_rate = 0.001
+    train_epoch = 1000
 
     x = tf.placeholder("float", [None, size_input, size_input, 3])
 
@@ -112,7 +108,6 @@ def alex_net():
     loss = get_loss(net, y)
 
     train_step = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=0.9).minimize(loss)
-    predict_op = tf.argmax(y, 1)
 
     X, Y = oxflower17.load_data(one_hot=True, resize_pics=(227, 227))
     # randomly chose 80% of data as train, 20% as test
@@ -122,7 +117,7 @@ def alex_net():
     test_x = X[~rnd_indices]
     test_y = Y[~rnd_indices]
 
-    correct_prediction = tf.equal(predict_op, tf.argmax(y, 1))
+    correct_prediction = tf.equal(tf.argmax(net, 1), tf.argmax(y, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
     # Launch the graph in a session
     with tf.Session() as sess:
@@ -143,14 +138,11 @@ def alex_net():
                 test_batch_y = test_y[test_idx]
                 print "test accuracy %g" % accuracy.eval(feed_dict={
                     x: test_batch_x, y: test_batch_y})
-        file_writer = tf.summary.FileWriter('logs', sess.graph)
 
 
 alex_net()
-# from tflearn.layers.estimator import regression
 
 '''
 # model training
 cross_entropy = -tf.reduce_sum(y_ * tf.log(y_conv))
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 '''
