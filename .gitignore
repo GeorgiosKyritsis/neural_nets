@@ -1,3 +1,6 @@
 17flowers
 .idea
 bvlc_alexnet.npy
+train_logs
+test_logs
+LSP_data
