@@ -71,7 +71,7 @@ def _add_loss_summaries(total_loss):
     return loss_averages_op
 
 
-def get_loss(total_loss):
+def train(total_loss):
 
     """Train DeepPose model.
 
@@ -119,3 +119,38 @@ def get_loss(total_loss):
         train_op = tf.no_op(name='train')
 
     return train_op
+
+
+def inference(images, keep_prob=1):
+
+    # Network Parameters
+    n_input = 220  # data input (img shape: 28*28)
+    n_depth = 3  # total classes (0-9 digits)
+    n_classes = 28  # total classes (0-9 digits)
+
+    conv1 = conv2d(images, 11, n_depth, 96, 4, padding='SAME', name='conv1')
+    lrn1 = tf.nn.lrn(conv1, name='lrn1')
+    pool1 = maxpool2d(lrn1, 2, 2, padding='VALID', name='pool1')
+    # output: 27 x 27 x 96
+
+
+    conv2 = conv2d(pool1, 5, 96, 256, 1, padding='SAME', name='conv2')
+    lrn2 = tf.nn.lrn(conv2, name='lrn2')
+    pool2 = maxpool2d(lrn2, 2, 2, padding='VALID', name='pool2')
+    # output: 13 x 13 x 256
+
+    conv3 = conv2d(pool2, 3, 256, 384, 1, padding='SAME', name='conv3')
+    conv4 = conv2d(conv3, 3, 384, 384, 1, padding='SAME', name='conv4')
+    conv5 = conv2d(conv4, 3, 384, 256, 1, padding='SAME', name='conv5')
+
+    pool3 = maxpool2d(conv5, 2, 2, padding='VALID', name='pool3')
+    # output: 6 x 6 x 256
+
+    fc1 = fc2d(pool3, 6 * 6 * 256, 4096, name='fc1')
+    fc2 = fc2d(fc1, 4096, 4096, name='fc2')
+    # fc3 = softmax2d(fc2, 4096, n_classes, name='fc3')
+    pred = fc2d(fc2, 4096, n_classes, relu=False, name='fc3')
+    return pred
+
+
+

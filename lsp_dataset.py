@@ -154,7 +154,7 @@ def generate_data(image_paths, labels):
     x = np.array([])
     y = np.array([])
     # for index in range(num_examples):
-    for index in range(min(30, num_examples)):
+    for index in range(min(10, num_examples)):
         image, or_height, or_width = prepare_image(image_paths[index])  # FIXME read file
         label = scale_label(labels[index], or_height, or_width)
         if index == 0:
